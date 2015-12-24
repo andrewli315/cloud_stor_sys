@@ -8,11 +8,11 @@ class FTPClient{
 	public Client(){
 		
 	}
-	public Auth(String card,String password)throws Exception{
+	public Connect_Data_Channel(String card,String password)throws Exception{
 		
 		
 	}
-	public void tran_message(String msg){
+	public void tran_file(String msg){
 		
 			//SK事實上為256位元長度，我們將其拆對半分別作為加密金鑰與IV//
 			//--------------加解密前先把key和iv拿出---------------------------------------//
