@@ -25,7 +25,6 @@ class FTPServer{
 	DataInputStream netIn;
 	DataOutputStream netOut;
 	
-	
 	EnhancedProfileManager profile;
 	AuthSocketServer server;
 	
@@ -100,7 +99,13 @@ class FTPServer{
 		fout.close();
 	}
 	public void Transmit(String file_name){
-		
+		int temp;
+		byte[] plain_txt = new byte[1];
+		byte[] cipher;
+
+		File f_r = new File(file_name);
+		netOut = new DataOutputStream(client.getOutputStream());
+		fin = new DataInputStream(new BufferedInputStream(new FileInputStream(f_r)));
 		
 		
 	}
