@@ -1,9 +1,5 @@
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.File;
-import java.util.Scanner;
+import java.io.*;
+import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.net.*;
 
@@ -18,40 +14,52 @@ import ezprivacy.service.register.EnhancedProfileRegistrationClient;
 
 
 class Server{
-	String[] Cmd = {"on","off","upload","download","cd","delete"};
+	String[] Cmd = {"on","exit","upload","download","cd","delete"};
 	String File_name = new String();
-	String msg;
 	int PORT = 3038;
 	File CARD = new File("server.card");
-	String PSW_CARD = "F74032162";
+	String PSW_CARD = "0000";
 	DataInputStream netIn;
 	DataOutputStream netOut;
-	BufferedReader reader;
+	BufferedInputStream buf;
 	
 	EnhancedProfileManager profile;
 	AuthSocketServer server;
 	EnhancedAuthSocketServerAcceptor serverAcceptor;
 	public Server(){
-		//netIn = new DataInputStream(server.getInputStream());
-		Scanner in = new Scanner(System.in);
+		String msg = "";
 		String get_str= new String();
+		int length;
+		boolean f= true;
+		//open the port to listening the client;
 		try{
 			ctrl_channel();
 		}catch(Exception e){
 			e.printStackTrace();
 		}
+		//continueosly listening the client
+		while(f){
+		try{
+			
+		}catch(Exception e){
+			f = false;
+			e.printStackTrace();
+		}
 			try{
-				in.nextLine();
-				reader = new BufferedReader(new InputStreamReader(server.getInputStream()));
-				msg = reader.readLine();
-				get_str = get_CMD(msg);
+				netIn = new DataInputStream(server.getInputStream());
+				length = netIn.readInt();
+				System.out.println("length = "+length);
+				byte[] temp = new byte[length];
+				netIn.read(temp);
+				get_str = get_CMD(temp);
+				Command(get_str);
 			}catch(Exception e){
+				f=false;
 				e.printStackTrace();
 			}
-			System.out.println(get_str);
-			if(get_str.equals("exit"))
-				close();
-				
+		}
+		close();
+		return;
 	}
 	public void ctrl_channel()throws Exception{
 		System.out.println("===== start EnhancedAuthSocketServerTest =====");
@@ -72,29 +80,38 @@ class Server{
 			
 			server.waitUntilAuthenticated();//等待是否完成認證
             System.out.println("[Server] sk: " + server.getSessionKey().getKeyValue());
+				
+			//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
+			EZCardLoader.saveEnhancedProfile(profile, CARD, PSW_CARD);
+			//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
 	}
 	public void Command(String cmd)throws Exception{
-		if(cmd.equals(Cmd[0]))
+		if(Cmd[0].equals(cmd)){
 			ctrl_channel();
-		else if(cmd.equals(Cmd[1]))
-				close();
-		else if(cmd.equals(Cmd[2]))
-			trans_File(File_name);
-		else if(cmd.equals(Cmd[3]))
-			reciev_File(File_name);
-		else if(cmd.equals(Cmd[4]))
-			CD(File_name);
-		else if(cmd.equals(Cmd[5]))
-			Delete(File_name);
-		else{
-			System.out.println("Error");
+		}
+		else if(Cmd[1].equals(cmd)){
+			close();
 			return;
+		}
+		else if(Cmd[2].equals(cmd)){
+			trans_File(File_name);
+		}
+		else if(Cmd[3].equals(cmd)){
+			reciev_File(File_name);
+		}
+		else if(Cmd[4].equals(cmd)){
+			CD(File_name);
+		}
+		else if(Cmd[5].equals(cmd)){
+			Delete(File_name);
+		}
+		else{
+			System.out.println(cmd);
 		}		
 	}
-	public String get_CMD(String msg)throws Exception{
+	public String get_CMD(byte[] encrypted_msg)throws Exception{
 		//--------------------------server接收client傳送的密文-------------------------------------//
-		
-		byte[] encrypted_msg = msg.getBytes();
+		System.out.println(encrypted_msg);
 		//--------------------------server接收client傳送的密文-------------------------------------//
 		
 		//SK事實上為256位元長度，我們將其拆對半分別作為加密金鑰與IV//
@@ -138,16 +155,19 @@ class Server{
 		
 	}
 	public int trans_File(String f){
+		System.out.println("trans File");
 		return 0;
 	}
 	public int reciev_File(String f){
-		
+		System.out.println("recive File");
 		return 0;
 	}
 	public boolean CD(String f){
+		System.out.println("CD dir");
 		return true;
 	}
 	public boolean Delete(String f){
+		System.out.println("Delete file");
 		return true;
 	}
 	public boolean isFile_Exist(String File){
@@ -158,14 +178,14 @@ class Server{
 	}
 	public void close(){
 		try{
-			netIn.close();
-			netOut.close();
-			server.close();
 			
 			//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
 			EZCardLoader.saveEnhancedProfile(profile, CARD, PSW_CARD);
 			//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
-		
+			netIn.close();
+			server.close();
+			System.exit(0);
+			return;
 		}catch(Exception e){
 			e.printStackTrace();
 		}
