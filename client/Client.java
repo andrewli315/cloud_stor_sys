@@ -35,13 +35,21 @@ class Client{
 	
 	//constructor of Client class, in order to create needy variable and GUI¡@surface
 	public Client()throws Exception{
+		boolean f=true;
+		
 		input = new BufferedReader(new InputStreamReader(System.in));
 		System.out.println("input the ip and port: ...");
 		IP=input.readLine();
 		PORT =3038; 
 		connect();
-		String msg = input.readLine();
-		trans_MSG(msg);
+		while(f){
+			String msg = input.readLine();
+			trans_MSG(msg);
+			if("exit".equals(msg)){
+				trans_MSG(msg);
+				f= false;
+			}
+		}
 		close();
 		return;
 		
