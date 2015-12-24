@@ -26,8 +26,8 @@ class Client{
 	BufferedOutputStream out;
 	String IP;
 	int PORT;
-	File card = new File("client.card");//註冊產生的卡
-	String password = "1234";//註冊產生的卡與相對應的密碼
+	File CARD = new File("client.card");//註冊產生的卡
+	String PSW_CARD = "1234";//註冊產生的卡與相對應的密碼
 	EnhancedProfileManager profile;
 	EnhancedAuthSocketClient client;
 	
@@ -59,7 +59,7 @@ class Client{
 		System.out.println("===== start EnhancedAuthSocketClientTest =====");
 			
 			//根據client的卡和密碼載入client的profile
-			profile = EZCardLoader.loadEnhancedProfile(card, password);
+			profile = EZCardLoader.loadEnhancedProfile(CARD, PSW_CARD);
 			System.out.println("[client] profile: " + profile);
 			
 			//產生一個client物件
@@ -72,7 +72,7 @@ class Client{
 			//------------- ACS為server,clent之間做MAKD金鑰分配，此時會client與server分享一把sessionkey------------------------//
 			
 			//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!!// 
-			EZCardLoader.saveEnhancedProfile(profile, card, password);
+			EZCardLoader.saveEnhancedProfile(profile, CARD, PSW_CARD);
 			//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
 			 
 			//--------------雙方做認證---------------------------------------------------//
