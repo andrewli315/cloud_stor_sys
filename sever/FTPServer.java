@@ -35,7 +35,7 @@ class FTPServer{
 		CARD = card;
 		PSW_CARD = psw;
 		try{
-			data_channel();
+			Data_Channel();
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -61,9 +61,13 @@ class FTPServer{
 			serverAcceptor.bind(PORT);//綁定port1234
 			server = serverAcceptor.accept();//等待client連上。
             
-			
+					
 			server.waitUntilAuthenticated();//等待是否完成認證
             System.out.println("[Server] sk: " + server.getSessionKey().getKeyValue());
+			
+			//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
+			EZCardLoader.saveEnhancedProfile(profile, card, PSW_CARD);
+			//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
 			
 	}
 	public void Recieve(String file_name)throws Exception{
