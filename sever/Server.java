@@ -20,7 +20,8 @@ class Server{
 	String[] Cmd = {"on","exit","upload","download","cd","delete"};
 	String File_name = new String();
 	int PORT = 3038;
-	File SERV_CARD = new File("server.card");
+	String CARD = "server.card";
+	File SERV_CARD = new File(CARD);
 	String PSW_CARD = "0000";
 	
 	String client_card;
@@ -157,15 +158,29 @@ class Server{
 		netOut.write(encrypted_msg);
 		netOut.flush();
 		//------------------------ ¿é¥X±K¤å-----------------------------------------//
-			
-		
-		
+
 	}
-	public int trans_File(String f){
+	public int trans_File(String f)throws Exception{
+		int length;
+		length = netIn.readInt();
+		byte[] temp = new byte[length];
+		netIn.read(temp);
+		String get_str = get_CMD(temp);//recieve the file name
+		FTPServer ftpserv = new FTPServer(PORT+1,CARD,PSW_CARD);
+		trans_Msg("recieve");
+		ftpserv.Transmit(get_str);
 		System.out.println("trans File");
 		return 0;
 	}
-	public int reciev_File(String f){
+	public int reciev_File(String f)throws Exception{
+		int length;
+		length = netIn.readInt();
+		byte[] temp = new byte[length];
+		netIn.read(temp);
+		String get_str = get_CMD(temp);//recieve the file name
+		FTPServer ftpserv = new FTPServer(PORT+1,CARD,PSW_CARD);
+		trans_Msg("transmit");
+		ftpserv.Recieve(get_str);
 		System.out.println("recive File");
 		return 0;
 	}

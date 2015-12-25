@@ -37,7 +37,7 @@ class FTPClient{
 			e.printStackTrace();
 		}
 	}
-	public void Connect_Data_Channel()throws Exception{
+	private void Connect_Data_Channel()throws Exception{
 		System.out.println("===== start EnhancedAuthSocketClientTest =====");
 			
 			File card = new File(CARD);//註冊產生的卡
@@ -73,13 +73,30 @@ class FTPClient{
 		File f_r = new File(file_name);
 		netOut = new DataOutputStream(client.getOutputStream());
 		fin = new DataInputStream(new BufferedInputStream(new FileInputStream(f_r)));
+		
+		//SK事實上為256位元長度，我們將其拆對半分別作為加密金鑰與IV//
+		//--------------加解密前先把key和iv拿出---------------------------------------//
+		byte[] sk = client.getSessionKey().getKeyValue();
+		byte[] k = CipherUtil.copy(sk, 0, CipherUtil.KEY_LENGTH);
+		byte[] iv = CipherUtil.copy(sk, CipherUtil.KEY_LENGTH, CipherUtil.BLOCK_LENGTH);
+		//--------------加解密前先把key和iv拿出---------------------------------------//
+		
+		while((temp = fin.read())!=-1){
+			
+			plain_txt[0] = (byte)temp;
+			cipher = CipherUtil.authEncrypt(k, iv, plain_txt);//將檔案明文加密
+			netOut.write(cipher);		
+		}
+		fin.close();
+		netOut.close();
 				
 	}
 	public void Reciev_file(String file_name){
 		
 		
+	}
+	public void close()throws Exception{
 		
 	}
-	
 	
 }

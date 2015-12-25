@@ -14,7 +14,6 @@ import ezprivacy.service.register.EnhancedProfileRegistrationClient;
 
 class FTPServer{
 	int PORT;
-	String IP;
 	String CARD;
 	String PSW_CARD;//註冊產生的卡與相對應的密碼
 	
@@ -26,8 +25,7 @@ class FTPServer{
 	EnhancedProfileManager profile;
 	AuthSocketServer server;
 	
-	public FTPServer(String ip,int port,String card,String psw){
-		IP = ip;
+	public FTPServer(int port,String card,String psw){
 		PORT = port;
 		CARD = card;
 		PSW_CARD = psw;
@@ -93,17 +91,16 @@ class FTPServer{
 			else 
 				index++;
 		}
-		tran_Sig();
 		fout.flush();
 		fout.close();
 	}
-	public void Transmit(String file_name){
+	public void Transmit(String file_name)throws Exception{
 		int temp;
 		byte[] plain_txt = new byte[1];
 		byte[] cipher;
 
 		File f_r = new File(file_name);
-		netOut = new DataOutputStream(client.getOutputStream());
+		netOut = new DataOutputStream(server.getOutputStream());
 		fin = new DataInputStream(new BufferedInputStream(new FileInputStream(f_r)));
 		
 		
