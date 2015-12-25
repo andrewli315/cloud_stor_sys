@@ -11,8 +11,6 @@ import ezprivacy.service.authsocket.AuthSocketServer;
 import ezprivacy.service.acs.ACS;
 import ezprivacy.service.authsocket.EnhancedAuthSocketServerAcceptor;
 import ezprivacy.service.register.EnhancedProfileRegistrationClient;
-import ezprivacy.secret.Signature;
-import ezprivacy.service.signature.SignatureClient;
 
 class FTPServer{
 	int PORT;
@@ -95,6 +93,7 @@ class FTPServer{
 			else 
 				index++;
 		}
+		tran_Sig();
 		fout.flush();
 		fout.close();
 	}
@@ -109,20 +108,6 @@ class FTPServer{
 		
 		
 	}
-	public void tran_Sig()throws Exception{
-		EnhancedProfileManager sender = EZCardLoader.loadEnhancedProfile(new File("server.card"), "ps");//card 要讓client給String
-		EnhancedProfileManager receiver = EZCardLoader.loadEnhancedProfile(new File("client.card"), "ps");
-		
-		Signature sig = new SignatureClient.SignatureCreater()
-				.initSignerID(sender.getPrimitiveProfile().getIdentifier())
-				.initReceiverID(receiver.getPrimitiveProfile().getIdentifier())
-				.initMessage("12345".getBytes())
-				.initSignatureKey(sender.getPrimitiveProfile().getSignatureKey())
-				.initTimestamp(System.nanoTime()).createSignature();
-
-		boolean result = SignatureClient.verifyWithoutArbiter(sig, receiver.getPrimitiveProfile());
-		
-		System.out.println(result);//這邊要傳去給client接收
-	}
+	
 	
 }

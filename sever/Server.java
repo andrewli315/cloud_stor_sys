@@ -11,14 +11,21 @@ import ezprivacy.service.authsocket.AuthSocketServer;
 import ezprivacy.service.acs.ACS;
 import ezprivacy.service.authsocket.EnhancedAuthSocketServerAcceptor;
 import ezprivacy.service.register.EnhancedProfileRegistrationClient;
+import ezprivacy.secret.Signature;
+import ezprivacy.service.signature.SignatureClient;
+
 
 
 class Server{
 	String[] Cmd = {"on","exit","upload","download","cd","delete"};
 	String File_name = new String();
 	int PORT = 3038;
-	File CARD = new File("server.card");
+	File SERV_CARD = new File("server.card");
 	String PSW_CARD = "0000";
+	
+	String client_card;
+	String client_psw;
+	
 	DataInputStream netIn;
 	DataOutputStream netOut;
 	BufferedInputStream buf;
@@ -69,7 +76,7 @@ class Server{
 			
 			
 			//根據server的卡和密碼載入server的profile
-			profile = EZCardLoader.loadEnhancedProfile(CARD, PSW_CARD);
+			profile = EZCardLoader.loadEnhancedProfile(SERV_CARD, PSW_CARD);
             
 			profiles.add(profile);//將profile放入profilemanager
 			
@@ -82,7 +89,7 @@ class Server{
             System.out.println("[Server] sk: " + server.getSessionKey().getKeyValue());
 				
 			//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
-			EZCardLoader.saveEnhancedProfile(profile, CARD, PSW_CARD);
+			EZCardLoader.saveEnhancedProfile(profile, SERV_CARD, PSW_CARD);
 			//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
 	}
 	public void Command(String cmd)throws Exception{
@@ -176,11 +183,30 @@ class Server{
 	public boolean isDirectory(String dir){
 		return true;
 	}
+	
+	public void tran_Sig()throws Exception{
+		
+		EnhancedProfileManager sender = EZCardLoader.loadEnhancedProfile(SERV_CARD, PSW_CARD);//SERV_CARD 要讓client給String
+		EnhancedProfileManager receiver = EZCardLoader.loadEnhancedProfile(new File(client_card), client_psw);
+		
+		Signature sig = new SignatureClient.SignatureCreater()
+				.initSignerID(sender.getPrimitiveProfile().getIdentifier())
+				.initReceiverID(receiver.getPrimitiveProfile().getIdentifier())
+				.initMessage("12345".getBytes())
+				.initSignatureKey(sender.getPrimitiveProfile().getSignatureKey())
+				.initTimestamp(System.nanoTime()).createSignature();
+
+		boolean result = SignatureClient.verifyWithoutArbiter(sig, receiver.getPrimitiveProfile());
+		
+		System.out.println(result);//這邊要傳去給client接收
+	}
+	
+	
 	public void close(){
 		try{
 			
 			//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
-			EZCardLoader.saveEnhancedProfile(profile, CARD, PSW_CARD);
+			EZCardLoader.saveEnhancedProfile(profile, SERV_CARD, PSW_CARD);
 			//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
 			netIn.close();
 			server.close();

@@ -17,6 +17,8 @@ import ezprivacy.service.authsocket.AuthSocketServer;
 import ezprivacy.service.acs.ACS;
 import ezprivacy.service.authsocket.EnhancedAuthSocketClient;
 import ezprivacy.service.register.EnhancedProfileRegistrationClient;
+import ezprivacy.secret.Signature;
+import ezprivacy.service.signature.SignatureClient;
 
 
 class Client{
