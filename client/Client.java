@@ -52,6 +52,11 @@ class Client{
 		connect();
 		netIn = new DataInputStream(new BufferedInputStream(client.getInputStream()));//listen to the message from server;
 		while(f){
+			
+			//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!!// 
+			EZCardLoader.saveEnhancedProfile(profile, CL_CARD, PSW_CARD);
+			//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
+			
 			String msg = input.readLine();
 			trans_MSG(msg);
 			Command(msg);
@@ -131,30 +136,31 @@ class Client{
 	}
 	public void Command(String cmd)throws Exception{
 		int length;
-		String msg = "";
+		String File_name="";
 		
 		
 		if(Cmd[0].equals(cmd)){
 			connect();
 		}
 		else if(Cmd[1].equals(cmd)){
+			Thread.sleep(100);
 			close();
 			System.exit(0);
 			return;
 		}
 		else if(Cmd[2].equals(cmd)){
-			String File_name = input.readLine();
+			File_name = input.readLine();
 			trans_MSG(File_name);
-			//length = netIn.readInt();
-			//byte[] temp = new byte[length];
-			//netIn.read(temp);
 			Thread.sleep(100);
-			System.out.println("trans???");
-			//if("ready".equals(get_MSG(temp)))//recieve the ready command
+			System.out.println("transmit file");
 			trans_File(File_name);
 		}
 		else if(Cmd[3].equals(cmd)){
-			recieve_File("test");
+			File_name = input.readLine();
+			System.out.println(File_name);
+			trans_MSG(File_name);
+			System.out.println("prepare switching on data channel");
+			recieve_File(File_name);
 		}
 		else if(Cmd[4].equals(cmd)){
 			netOut.write("cd".getBytes());
@@ -172,21 +178,34 @@ class Client{
 	public void trans_File(String f)throws Exception{
 		System.out.println("transmit File");
 		
-		FTPClient ftpclient = new FTPClient(IP,PORT+1,CARD,PSW_CARD);
+		FTPClient ftpclient = new FTPClient(IP,PORT+1000,CARD,PSW_CARD);
 		ftpclient.Connect_Data_Channel();
 
 		ftpclient.Trans_file(f);
+		System.out.println("transmit File : " + f);
+		//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!!// 
+		EZCardLoader.saveEnhancedProfile(profile, CL_CARD, PSW_CARD);
+		//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
+
+		ftpclient.close();
 		
-		System.out.println("transmit File" + f);
-					//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!!// 
-			EZCardLoader.saveEnhancedProfile(profile, CL_CARD, PSW_CARD);
-			//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
 		return;
 		
 	}
 	//the purpose is also to create a new data channel to transmit the file
-	public void recieve_File(String f){
+	public void recieve_File(String f)throws Exception{
 		System.out.println("recieve File");
+		
+		FTPClient ftpclient = new FTPClient(IP,PORT+1000,CARD,PSW_CARD);
+		ftpclient.Connect_Data_Channel();
+
+		ftpclient.Reciev_file(f);
+		System.out.println("transmit File : " + f);
+		//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!!// 
+		EZCardLoader.saveEnhancedProfile(profile, CL_CARD, PSW_CARD);
+		//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
+
+		ftpclient.close();
 	}
 	//recieve the Signature from the Server and save as a file;
 	public void recieve_Sig(){
@@ -198,10 +217,6 @@ class Client{
 	}
 	//close the client socket
 	public void close()throws Exception{
-		
-			//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!!// 
-			EZCardLoader.saveEnhancedProfile(profile, CL_CARD, PSW_CARD);
-			//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
 		netOut.close();
 		client.close();
 	}

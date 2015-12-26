@@ -85,7 +85,7 @@ class FTPServer{
 				
 		while((temp = netIn.read()) != -1){
 			cipher[index] = (byte)temp;
-			System.out.printf("%d ",temp);
+			//System.out.printf("%d ",temp);
 			if(index == 31){
 				dec_data = CipherUtil.authDecrypt(k, iv, cipher);//將client傳來的密文解密
 				//System.out.printf("\n%d ",dec_data);
@@ -100,7 +100,7 @@ class FTPServer{
 		//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
 		fout.flush();
 		fout.close();
-		server.close();
+		close();
 		System.exit(0);
 	}
 	public void Transmit(String file_name)throws Exception{
@@ -111,6 +111,41 @@ class FTPServer{
 		File f_r = new File(file_name);
 		netOut = new DataOutputStream(server.getOutputStream());
 		fin = new DataInputStream(new BufferedInputStream(new FileInputStream(f_r)));
+		
+		//SK事實上為256位元長度，我們將其拆對半分別作為加密金鑰與IV//
+		//--------------加解密前先把key和iv拿出---------------------------------------//
+		byte[] sk = server.getSessionKey().getKeyValue();
+		byte[] k = CipherUtil.copy(sk, 0, CipherUtil.KEY_LENGTH);
+		byte[] iv = CipherUtil.copy(sk, CipherUtil.KEY_LENGTH, CipherUtil.BLOCK_LENGTH);
+		//--------------加解密前先把key和iv拿出---------------------------------------//
+		
+		while((temp = fin.read())!=-1){
+			System.out.printf("%d ",temp);
+			plain_txt[0] = (byte)temp;
+			cipher = CipherUtil.authEncrypt(k, iv, plain_txt);//將檔案明文加密
+			netOut.write(cipher);
+			Thread.sleep(5);
+		}
+		//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!!// 
+		EZCardLoader.saveEnhancedProfile(profile, card, PSW_CARD);
+		//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
+		fin.close();
+		netOut.flush();
+		netOut.close();
+		Thread.sleep(100);
+		close();
+		System.exit(0);
+				
+	}
+	public void close(){
+		try{
+			//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
+			EZCardLoader.saveEnhancedProfile(profile, card, PSW_CARD);
+			//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
+			server.close();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
 	}
 	
 }

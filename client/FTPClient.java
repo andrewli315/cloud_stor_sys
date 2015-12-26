@@ -79,11 +79,11 @@ class FTPClient{
 		//--------------加解密前先把key和iv拿出---------------------------------------//
 		
 		while((temp = fin.read())!=-1){
-			System.out.printf("%d ",temp);
+			//System.out.printf("%d ",temp);
 			plain_txt[0] = (byte)temp;
 			cipher = CipherUtil.authEncrypt(k, iv, plain_txt);//將檔案明文加密
 			netOut.write(cipher);
-			Thread.sleep(100);
+			Thread.sleep(5);
 		}
 		//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!!// 
 		EZCardLoader.saveEnhancedProfile(profile, card, PSW_CARD);
@@ -91,16 +91,56 @@ class FTPClient{
 		fin.close();
 		netOut.flush();
 		netOut.close();
-		client.close();
+		Thread.sleep(100);
+		close();
 		System.exit(0);
 				
 	}
-	public void Reciev_file(String file_name){
+	public void Reciev_file(String file_name)throws Exception{
+		
+		int index=0;
+		int temp;
+		byte[] cipher = new byte[32];
+		byte[] dec_data = new byte[1];
+		File f_wr = new File(file_name);
+		fout = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(f_wr)));
+		netIn = new DataInputStream(new BufferedInputStream(client.getInputStream()));
+		  
+		//SK事實上為256位元長度，我們將其拆對半分別作為加密金鑰與IV//
+		//--------------加解密前先把key和iv拿出---------------------------------------//
+		byte[] sk = client.getSessionKey().getKeyValue();
+		byte[] k = CipherUtil.copy(sk, 0, CipherUtil.KEY_LENGTH);
+		byte[] iv = CipherUtil.copy(sk, CipherUtil.KEY_LENGTH, CipherUtil.BLOCK_LENGTH);
+		//--------------加解密前先把key和iv拿出---------------------------------------//
+				
+		while((temp = netIn.read()) != -1){
+			cipher[index] = (byte)temp;
+			//System.out.printf("%d ",temp);
+			if(index == 31){
+				dec_data = CipherUtil.authDecrypt(k, iv, cipher);//將client傳來的密文解密
+				//System.out.printf("\n%d ",dec_data);
+				fout.write(dec_data);
+				index =0;
+			}
+			else 
+				index++;
+		}
+		//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
+		EZCardLoader.saveEnhancedProfile(profile, card, PSW_CARD);
+		//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
+		fout.flush();
+		fout.close();
+		close();
+		System.exit(0);
 		
 		
 	}
 	public void close()throws Exception{
-		
+			
+		//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!!// 
+		EZCardLoader.saveEnhancedProfile(profile, card, PSW_CARD);
+		//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
+		client.close();
 	}
 	
 }

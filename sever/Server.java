@@ -47,6 +47,9 @@ class Server{
 		}
 		//continueosly listening the client
 		while(f){
+			//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
+			EZCardLoader.saveEnhancedProfile(profile, SERV_CARD, PSW_CARD);
+			//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
 		try{
 			
 		}catch(Exception e){
@@ -108,16 +111,16 @@ class Server{
 			byte[] temp = new byte[length];
 			netIn.read(temp);
 			String File_name = get_Msg(temp);//recieve the file name
-
 			reciev_File(File_name);
 		}
 		else if(Cmd[3].equals(cmd)){
+			System.out.println("prepare switching on data channel");
 			int length;
 			length = netIn.readInt();
 			byte[] temp = new byte[length];
 			netIn.read(temp);
-			String get_str = get_Msg(temp);//recieve the file name
-			reciev_File(File_name);
+			String File_name = get_Msg(temp);//recieve the file name
+			trans_File(File_name);
 		}
 		else if(Cmd[4].equals(cmd)){
 			CD(File_name);
@@ -174,17 +177,16 @@ class Server{
 	}
 	public int trans_File(String f)throws Exception{
 		
-		FTPServer ftpserv = new FTPServer(PORT+1,CARD,PSW_CARD);
+		FTPServer ftpserv = new FTPServer(PORT+1000,CARD,PSW_CARD);
 		ftpserv.Transmit(f);
 		System.out.println("trans File");
 		return 0;
 	}
-	public int reciev_File(String f)throws Exception{
-		FTPServer ftpserv = new FTPServer(PORT+1,CARD,PSW_CARD);
-		//trans_Msg("transmit");
+	public void reciev_File(String f)throws Exception{
+		FTPServer ftpserv = new FTPServer(PORT+1000,CARD,PSW_CARD);
 		ftpserv.Recieve(f);
 		System.out.println("recive File");
-		return 0;
+		ftpserv.close();
 	}
 	public boolean CD(String f){
 		System.out.println("CD dir");
@@ -222,9 +224,7 @@ class Server{
 	public void close(){
 		try{
 			
-			//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
-			EZCardLoader.saveEnhancedProfile(profile, SERV_CARD, PSW_CARD);
-			//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
+
 			netIn.close();
 			server.close();
 			System.exit(0);
