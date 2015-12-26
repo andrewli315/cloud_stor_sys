@@ -22,6 +22,8 @@ class FTPServer{
 	DataInputStream netIn;
 	DataOutputStream netOut;
 	
+	File card;
+	
 	EnhancedProfileManager profile;
 	AuthSocketServer server;
 	
@@ -43,7 +45,7 @@ class FTPServer{
 			ConcurrentSkipListSet<EnhancedProfileManager> profiles = new ConcurrentSkipListSet<EnhancedProfileManager>();
 			
 			
-			File card = new File(CARD);//註冊產生的卡
+			card = new File(CARD);//註冊產生的卡
 			
 			
 			//根據server的卡和密碼載入server的profile
@@ -72,8 +74,8 @@ class FTPServer{
 		byte[] dec_data = new byte[1];
 		File f_wr = new File(file_name);
 		fout = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(f_wr)));
-		netIn = new DataInputStream(server.getInputStream());
-		
+		netIn = new DataInputStream(new BufferedInputStream(server.getInputStream()));
+		  
 		//SK事實上為256位元長度，我們將其拆對半分別作為加密金鑰與IV//
 		//--------------加解密前先把key和iv拿出---------------------------------------//
 		byte[] sk = server.getSessionKey().getKeyValue();
@@ -83,16 +85,23 @@ class FTPServer{
 				
 		while((temp = netIn.read()) != -1){
 			cipher[index] = (byte)temp;
+			System.out.printf("%d ",temp);
 			if(index == 31){
 				dec_data = CipherUtil.authDecrypt(k, iv, cipher);//將client傳來的密文解密
+				//System.out.printf("\n%d ",dec_data);
 				fout.write(dec_data);
 				index =0;
 			}
 			else 
 				index++;
 		}
+		//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
+		EZCardLoader.saveEnhancedProfile(profile, card, PSW_CARD);
+		//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
 		fout.flush();
 		fout.close();
+		server.close();
+		System.exit(0);
 	}
 	public void Transmit(String file_name)throws Exception{
 		int temp;
@@ -102,9 +111,6 @@ class FTPServer{
 		File f_r = new File(file_name);
 		netOut = new DataOutputStream(server.getOutputStream());
 		fin = new DataInputStream(new BufferedInputStream(new FileInputStream(f_r)));
-		
-		
 	}
-	
 	
 }

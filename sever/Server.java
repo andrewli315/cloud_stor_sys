@@ -59,7 +59,7 @@ class Server{
 				System.out.println("length = "+length);
 				byte[] temp = new byte[length];
 				netIn.read(temp);
-				get_str = get_CMD(temp);
+				get_str = get_Msg(temp);
 				Command(get_str);
 			}catch(Exception e){
 				f=false;
@@ -102,9 +102,21 @@ class Server{
 			return;
 		}
 		else if(Cmd[2].equals(cmd)){
-			trans_File(File_name);
+			System.out.println("prepare switching on data channel");
+			int length;
+			length = netIn.readInt();
+			byte[] temp = new byte[length];
+			netIn.read(temp);
+			String File_name = get_Msg(temp);//recieve the file name
+
+			reciev_File(File_name);
 		}
 		else if(Cmd[3].equals(cmd)){
+			int length;
+			length = netIn.readInt();
+			byte[] temp = new byte[length];
+			netIn.read(temp);
+			String get_str = get_Msg(temp);//recieve the file name
 			reciev_File(File_name);
 		}
 		else if(Cmd[4].equals(cmd)){
@@ -117,7 +129,7 @@ class Server{
 			System.out.println(cmd);
 		}		
 	}
-	public String get_CMD(byte[] encrypted_msg)throws Exception{
+	public String get_Msg(byte[] encrypted_msg)throws Exception{
 		//--------------------------server接收client傳送的密文-------------------------------------//
 		System.out.println(encrypted_msg);
 		//--------------------------server接收client傳送的密文-------------------------------------//
@@ -161,26 +173,16 @@ class Server{
 
 	}
 	public int trans_File(String f)throws Exception{
-		int length;
-		length = netIn.readInt();
-		byte[] temp = new byte[length];
-		netIn.read(temp);
-		String get_str = get_CMD(temp);//recieve the file name
+		
 		FTPServer ftpserv = new FTPServer(PORT+1,CARD,PSW_CARD);
-		trans_Msg("recieve");
-		ftpserv.Transmit(get_str);
+		ftpserv.Transmit(f);
 		System.out.println("trans File");
 		return 0;
 	}
 	public int reciev_File(String f)throws Exception{
-		int length;
-		length = netIn.readInt();
-		byte[] temp = new byte[length];
-		netIn.read(temp);
-		String get_str = get_CMD(temp);//recieve the file name
 		FTPServer ftpserv = new FTPServer(PORT+1,CARD,PSW_CARD);
-		trans_Msg("transmit");
-		ftpserv.Recieve(get_str);
+		//trans_Msg("transmit");
+		ftpserv.Recieve(f);
 		System.out.println("recive File");
 		return 0;
 	}

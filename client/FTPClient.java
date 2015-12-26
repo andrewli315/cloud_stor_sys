@@ -23,6 +23,8 @@ class FTPClient{
 	DataInputStream netIn;
 	DataOutputStream netOut;
 	
+	File card;
+	
 	EnhancedProfileManager profile;
 	EnhancedAuthSocketClient client;
 	
@@ -31,16 +33,11 @@ class FTPClient{
 		PORT = port;
 		CARD = card;
 		PSW_CARD = psw;
-		try{
-			Connect_Data_Channel();
-		}catch(Exception e){
-			e.printStackTrace();
-		}
 	}
-	private void Connect_Data_Channel()throws Exception{
+	public void Connect_Data_Channel()throws Exception{
 		System.out.println("===== start EnhancedAuthSocketClientTest =====");
 			
-			File card = new File(CARD);//註冊產生的卡
+			 card = new File(CARD);//註冊產生的卡
 			
 			//根據client的卡和密碼載入client的profile
 			profile = EZCardLoader.loadEnhancedProfile(card, PSW_CARD);
@@ -65,7 +62,7 @@ class FTPClient{
 			//--------------雙方做認證---------------------------------------------------//
 		
 	}
-	public void tran_file(String file_name)throws Exception{
+	public void Trans_file(String file_name)throws Exception{
 		int temp;
 		byte[] plain_txt = new byte[1];
 		byte[] cipher;
@@ -82,13 +79,20 @@ class FTPClient{
 		//--------------加解密前先把key和iv拿出---------------------------------------//
 		
 		while((temp = fin.read())!=-1){
-			
+			System.out.printf("%d ",temp);
 			plain_txt[0] = (byte)temp;
 			cipher = CipherUtil.authEncrypt(k, iv, plain_txt);//將檔案明文加密
-			netOut.write(cipher);		
+			netOut.write(cipher);
+			Thread.sleep(100);
 		}
+		//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!!// 
+		EZCardLoader.saveEnhancedProfile(profile, card, PSW_CARD);
+		//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
 		fin.close();
+		netOut.flush();
 		netOut.close();
+		client.close();
+		System.exit(0);
 				
 	}
 	public void Reciev_file(String file_name){

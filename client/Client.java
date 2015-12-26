@@ -2,6 +2,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.PrintStream;
 import java.io.BufferedReader;
+import java.io.BufferedInputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -33,7 +34,7 @@ class Client{
 	File CL_CARD = new File(CARD);//註冊產生的卡
 	String PSW_CARD = "1234";//註冊產生的卡與相對應的密碼
 	
-	String[] CMD = {"on","off","recieve","transmit","cd","delete"};
+	String[] Cmd = {"on","off","upload","download","cd","delete"};
 	
 	EnhancedProfileManager profile;
 	EnhancedAuthSocketClient client;
@@ -49,9 +50,11 @@ class Client{
 		IP=input.readLine();
 		PORT =3038; 
 		connect();
+		netIn = new DataInputStream(new BufferedInputStream(client.getInputStream()));//listen to the message from server;
 		while(f){
 			String msg = input.readLine();
 			trans_MSG(msg);
+			Command(msg);
 			if("exit".equals(msg)){
 				trans_MSG(msg);
 				f= false;
@@ -107,22 +110,86 @@ class Client{
 		netOut.writeInt(encrypted_msg.length);
 		netOut.write(encrypted_msg);
 		netOut.flush();
-		
 		//--------------輸出密文-------------------------------------------------------//
-		
+	}
+	public String get_MSG(byte[] msg)throws Exception{
+		//SK事實上為256位元長度，我們將其拆對半分別作為加密金鑰與IV//
+		//--------------加解密前先把key和iv拿出---------------------------------------//
+		byte[] sk = client.getSessionKey().getKeyValue();
+		byte[] k = CipherUtil.copy(sk, 0, CipherUtil.KEY_LENGTH);
+		byte[] iv = CipherUtil.copy(sk, CipherUtil.KEY_LENGTH, CipherUtil.BLOCK_LENGTH);
+		//--------------加解密前先把key和iv拿出---------------------------------------// 
+			
+			
+		//--------------------------解密-----------------------------------------//
+		String decrypt_msg = new String(CipherUtil.authDecrypt(k, iv, msg));//將server傳來的密文解密
+		System.out.println("client say: " + decrypt_msg);
+		return decrypt_msg;
+		//--------------------------解密-----------------------------------------//	
 		
 		
 	}
+	public void Command(String cmd)throws Exception{
+		int length;
+		String msg = "";
+		
+		
+		if(Cmd[0].equals(cmd)){
+			connect();
+		}
+		else if(Cmd[1].equals(cmd)){
+			close();
+			System.exit(0);
+			return;
+		}
+		else if(Cmd[2].equals(cmd)){
+			String File_name = input.readLine();
+			trans_MSG(File_name);
+			//length = netIn.readInt();
+			//byte[] temp = new byte[length];
+			//netIn.read(temp);
+			Thread.sleep(100);
+			System.out.println("trans???");
+			//if("ready".equals(get_MSG(temp)))//recieve the ready command
+			trans_File(File_name);
+		}
+		else if(Cmd[3].equals(cmd)){
+			recieve_File("test");
+		}
+		else if(Cmd[4].equals(cmd)){
+			netOut.write("cd".getBytes());
+		}
+		else if(Cmd[5].equals(cmd)){
+			netOut.write("delete".getBytes());
+		}
+		else{
+			System.out.println(cmd);
+		}		
+		
+	}
+	
 	//create a new FTPClient class(the class define in another java file, mainly dealing with the data transmission) to create a new data channel
-	public void trans_File(String f){
+	public void trans_File(String f)throws Exception{
+		System.out.println("transmit File");
+		
+		FTPClient ftpclient = new FTPClient(IP,PORT+1,CARD,PSW_CARD);
+		ftpclient.Connect_Data_Channel();
+
+		ftpclient.Trans_file(f);
+		
+		System.out.println("transmit File" + f);
+					//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!!// 
+			EZCardLoader.saveEnhancedProfile(profile, CL_CARD, PSW_CARD);
+			//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
+		return;
 		
 	}
 	//the purpose is also to create a new data channel to transmit the file
 	public void recieve_File(String f){
-		
+		System.out.println("recieve File");
 	}
 	//recieve the Signature from the Server and save as a file;
-	public void recieve_Sign(){
+	public void recieve_Sig(){
 		
 	}
 	//transmit a command to delete some file or directories
@@ -131,6 +198,10 @@ class Client{
 	}
 	//close the client socket
 	public void close()throws Exception{
+		
+			//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!!// 
+			EZCardLoader.saveEnhancedProfile(profile, CL_CARD, PSW_CARD);
+			//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
 		netOut.close();
 		client.close();
 	}
