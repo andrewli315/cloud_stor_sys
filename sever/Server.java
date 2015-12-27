@@ -19,7 +19,7 @@ import ezprivacy.service.signature.SignatureClient;
 class Server{
 	String[] Cmd = {"on","exit","upload","download","cd","delete"};
 	String File_name = new String();
-	int PORT = 3038;
+	int PORT;
 	String CARD = "server.card";
 	File SERV_CARD = new File(CARD);
 	String PSW_CARD = "0000";
@@ -29,27 +29,29 @@ class Server{
 	
 	DataInputStream netIn;
 	DataOutputStream netOut;
-	BufferedInputStream buf;
+	BufferedReader input;
 	
 	EnhancedProfileManager profile;
 	AuthSocketServer server;
 	EnhancedAuthSocketServerAcceptor serverAcceptor;
 	public Server(){
+		
 		String msg = "";
 		String get_str= new String();
 		int length;
 		boolean f= true;
+		input = new BufferedReader(new InputStreamReader(System.in));
 		//open the port to listening the client;
 		try{
+			System.out.println("input the port: ");
+			PORT = Integer.parseInt(input.readLine());
 			ctrl_channel();
 		}catch(Exception e){
 			e.printStackTrace();
 		}
+		
 		//continueosly listening the client
 		while(f){
-			//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
-			EZCardLoader.saveEnhancedProfile(profile, SERV_CARD, PSW_CARD);
-			//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
 		try{
 			
 		}catch(Exception e){

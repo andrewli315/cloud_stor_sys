@@ -34,7 +34,7 @@ class Client{
 	File CL_CARD = new File(CARD);//註冊產生的卡
 	String PSW_CARD = "1234";//註冊產生的卡與相對應的密碼
 	
-	String[] Cmd = {"on","off","upload","download","cd","delete"};
+	String[] Cmd = {"on","exit","upload","download","cd","delete"};
 	
 	EnhancedProfileManager profile;
 	EnhancedAuthSocketClient client;
@@ -46,16 +46,13 @@ class Client{
 		boolean f=true;
 		
 		input = new BufferedReader(new InputStreamReader(System.in));
-		System.out.println("input the ip and port: ...");
-		IP=input.readLine();
-		PORT =3038; 
+		System.out.println("input the ip and port: ");
+		IP = input.readLine();
+		System.out.println("input the port: ");
+		PORT = Integer.parseInt(input.readLine()); 
 		connect();
 		netIn = new DataInputStream(new BufferedInputStream(client.getInputStream()));//listen to the message from server;
 		while(f){
-			
-			//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!!// 
-			EZCardLoader.saveEnhancedProfile(profile, CL_CARD, PSW_CARD);
-			//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
 			
 			String msg = input.readLine();
 			trans_MSG(msg);
@@ -149,18 +146,21 @@ class Client{
 			return;
 		}
 		else if(Cmd[2].equals(cmd)){
+			System.out.println("input the data name: ");
 			File_name = input.readLine();
 			trans_MSG(File_name);
 			Thread.sleep(100);
-			System.out.println("transmit file");
 			trans_File(File_name);
+			System.out.println("recieve file!");
 		}
 		else if(Cmd[3].equals(cmd)){
+			System.out.println("input the data name: ");
 			File_name = input.readLine();
 			System.out.println(File_name);
 			trans_MSG(File_name);
 			System.out.println("prepare switching on data channel");
 			recieve_File(File_name);
+			System.out.println("recieve file!");
 		}
 		else if(Cmd[4].equals(cmd)){
 			netOut.write("cd".getBytes());
@@ -183,9 +183,6 @@ class Client{
 
 		ftpclient.Trans_file(f);
 		System.out.println("transmit File : " + f);
-		//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!!// 
-		EZCardLoader.saveEnhancedProfile(profile, CL_CARD, PSW_CARD);
-		//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
 
 		ftpclient.close();
 		
@@ -201,9 +198,6 @@ class Client{
 
 		ftpclient.Reciev_file(f);
 		System.out.println("transmit File : " + f);
-		//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!!// 
-		EZCardLoader.saveEnhancedProfile(profile, CL_CARD, PSW_CARD);
-		//!!!!!!!!!!!!!!!!!!!!!每次做完一次MAKD一定要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
 
 		ftpclient.close();
 	}

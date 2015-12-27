@@ -85,10 +85,8 @@ class FTPServer{
 				
 		while((temp = netIn.read()) != -1){
 			cipher[index] = (byte)temp;
-			//System.out.printf("%d ",temp);
 			if(index == 31){
 				dec_data = CipherUtil.authDecrypt(k, iv, cipher);//將client傳來的密文解密
-				//System.out.printf("\n%d ",dec_data);
 				fout.write(dec_data);
 				index =0;
 			}
@@ -120,7 +118,6 @@ class FTPServer{
 		//--------------加解密前先把key和iv拿出---------------------------------------//
 		
 		while((temp = fin.read())!=-1){
-			System.out.printf("%d ",temp);
 			plain_txt[0] = (byte)temp;
 			cipher = CipherUtil.authEncrypt(k, iv, plain_txt);//將檔案明文加密
 			netOut.write(cipher);
