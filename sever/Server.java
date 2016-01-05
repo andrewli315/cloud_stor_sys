@@ -24,6 +24,9 @@ class Server{
 	File SERV_CARD = new File(CARD);
 	String PSW_CARD = "0000";
 	
+	byte[] SK;
+	byte[] S_IV;
+	
 	String client_card;
 	String client_psw;
 	
@@ -93,6 +96,18 @@ class Server{
 			
 			server.waitUntilAuthenticated();//等待是否完成認證
             System.out.println("[Server] sk: " + server.getSessionKey().getKeyValue());
+			
+			
+			//--------------------------server傳送密文-------------------------------------//
+			//SK事實上為256位元長度，我們將其拆對半分別作為加密金鑰與IV//
+			//--------------加解密前先把key和iv拿出---------------------------------------//
+			byte[] sk = server.getSessionKey().getKeyValue();
+			SK = CipherUtil.copy(sk, 0, CipherUtil.KEY_LENGTH);
+			S_IV = CipherUtil.copy(sk, CipherUtil.KEY_LENGTH, CipherUtil.BLOCK_LENGTH);
+			//--------------加解密前先把key和iv拿出---------------------------------------// 
+		
+			
+			
 				
 			//!!!!!!!!!!!!!!!!!!!!!每次結束程式前必要要儲存profile!!!!!!!!!!!!!!!!!!!!!!!!!// 
 			EZCardLoader.saveEnhancedProfile(profile, SERV_CARD, PSW_CARD);
@@ -148,7 +163,7 @@ class Server{
 			
 			
 		//--------------------------解密-----------------------------------------//
-		String decrypt_msg = new String(CipherUtil.authDecrypt(k, iv, encrypted_msg));//將client傳來的密文解密
+		String decrypt_msg = new String(CipherUtil.authDecrypt(SK, S_IV, encrypted_msg));//將client傳來的密文解密
 		System.out.println("client say: " + decrypt_msg);
 		return decrypt_msg;
 		//--------------------------解密-----------------------------------------//	
@@ -156,18 +171,10 @@ class Server{
 	}
 	public void trans_Msg(String msg)throws Exception{
 		
-		//--------------------------server傳送密文-------------------------------------//
-		//SK事實上為256位元長度，我們將其拆對半分別作為加密金鑰與IV//
-		//--------------加解密前先把key和iv拿出---------------------------------------//
-		byte[] sk = server.getSessionKey().getKeyValue();
-		byte[] k = CipherUtil.copy(sk, 0, CipherUtil.KEY_LENGTH);
-		byte[] iv = CipherUtil.copy(sk, CipherUtil.KEY_LENGTH, CipherUtil.BLOCK_LENGTH);
-		//--------------加解密前先把key和iv拿出---------------------------------------// 
 		
 		//-------------------------加密--------------------------------------//
-		byte[] encrypted_msg = CipherUtil.authEncrypt(k, iv, msg.getBytes());
+		byte[] encrypted_msg = CipherUtil.authEncrypt(SK, S_IV, msg.getBytes());
 		//-------------------------加密--------------------------------------//
-		
 		
 		//------------------------ 輸出密文-----------------------------------------//
 		netOut = new DataOutputStream(server.getOutputStream());
@@ -179,16 +186,23 @@ class Server{
 	}
 	public int trans_File(String f)throws Exception{
 		
-		FTPServer ftpserv = new FTPServer(PORT+1000,CARD,PSW_CARD);
-		ftpserv.Transmit(f);
+		FTPServer ftpserv = new FTPServer(PORT+1000,SK,S_IV);
+		Thread.sleep(100);
+		ftpserv.send_prev_key(f);
+		ftpserv.Transmit(f);		
 		System.out.println("trans File");
+		Thread.sleep(1000);
+		//ftpserv.close();
 		return 0;
 	}
 	public void reciev_File(String f)throws Exception{
-		FTPServer ftpserv = new FTPServer(PORT+1000,CARD,PSW_CARD);
+		FTPServer ftpserv = new FTPServer(PORT+1000,SK,S_IV);
+		ftpserv.get_key_iv(f);
 		ftpserv.Recieve(f);
 		System.out.println("recive File");
+		Thread.sleep(100);
 		ftpserv.close();
+		return;
 	}
 	public boolean CD(String f){
 		System.out.println("CD dir");

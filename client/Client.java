@@ -28,12 +28,14 @@ class Client{
 	BufferedReader input;
 	BufferedOutputStream out;
 	
+	String PIN;
 	String IP;
 	int PORT;
 	String CARD = "client.card";
 	File CL_CARD = new File(CARD);//註冊產生的卡
 	String PSW_CARD = "1234";//註冊產生的卡與相對應的密碼
-	
+	byte[] MK;
+	byte[] M_IV;
 	String[] Cmd = {"on","exit","upload","download","cd","delete"};
 	
 	EnhancedProfileManager profile;
@@ -50,6 +52,13 @@ class Client{
 		IP = input.readLine();
 		System.out.println("input the port: ");
 		PORT = Integer.parseInt(input.readLine()); 
+		PIN = input.readLine();//4 digits pin number
+		PIN = PIN+"000000000000";
+		byte[] temp = CipherUtil.authEncrypt(PIN.getBytes(), "0101010101010101".getBytes(), PIN.getBytes());
+		//把加密過的Pin碼(32bytes)分乘兩部分一部分用作Master Key 另一部分當加密File name 根 file key的 IV
+		MK = CipherUtil.copy(temp, 0, CipherUtil.KEY_LENGTH);
+		M_IV = CipherUtil.copy(temp, CipherUtil.KEY_LENGTH, CipherUtil.BLOCK_LENGTH);
+		
 		connect();
 		netIn = new DataInputStream(new BufferedInputStream(client.getInputStream()));//listen to the message from server;
 		while(f){
@@ -148,17 +157,18 @@ class Client{
 		else if(Cmd[2].equals(cmd)){
 			System.out.println("input the data name: ");
 			File_name = input.readLine();
+			//String ff = new String(CipherUtil.authEncrypt(MK,M_IV, File_name.getBytes()));
 			trans_MSG(File_name);
-			Thread.sleep(100);
+			Thread.sleep(1000);
 			trans_File(File_name);
-			System.out.println("recieve file!");
+			System.out.println("transmit file!");
 		}
 		else if(Cmd[3].equals(cmd)){
 			System.out.println("input the data name: ");
 			File_name = input.readLine();
 			System.out.println(File_name);
 			trans_MSG(File_name);
-			System.out.println("prepare switching on data channel");
+			System.out.println("switching on data channel");
 			recieve_File(File_name);
 			System.out.println("recieve file!");
 		}
@@ -178,7 +188,13 @@ class Client{
 	public void trans_File(String f)throws Exception{
 		System.out.println("transmit File");
 		
-		FTPClient ftpclient = new FTPClient(IP,PORT+1000,CARD,PSW_CARD);
+		//--------------加解密前先把key和iv拿出---------------------------------------//
+		byte[] sk = client.getSessionKey().getKeyValue();
+		byte[] k = CipherUtil.copy(sk, 0, CipherUtil.KEY_LENGTH);
+		byte[] iv = CipherUtil.copy(sk, CipherUtil.KEY_LENGTH, CipherUtil.BLOCK_LENGTH);
+		//--------------加解密前先把key和iv拿出---------------------------------------// 
+		
+		FTPClient ftpclient = new FTPClient(IP,PORT+1000,k,iv,MK,M_IV);
 		ftpclient.Connect_Data_Channel();
 
 		ftpclient.Trans_file(f);
@@ -192,14 +208,22 @@ class Client{
 	//the purpose is also to create a new data channel to transmit the file
 	public void recieve_File(String f)throws Exception{
 		System.out.println("recieve File");
+		//--------------加解密前先把key和iv拿出---------------------------------------//
+		byte[] sk = client.getSessionKey().getKeyValue();
+		byte[] k = CipherUtil.copy(sk, 0, CipherUtil.KEY_LENGTH);
+		byte[] iv = CipherUtil.copy(sk, CipherUtil.KEY_LENGTH, CipherUtil.BLOCK_LENGTH);
+		//--------------加解密前先把key和iv拿出---------------------------------------// 
 		
-		FTPClient ftpclient = new FTPClient(IP,PORT+1000,CARD,PSW_CARD);
+		FTPClient ftpclient = new FTPClient(IP,PORT+1000,k,iv,MK,M_IV);
 		ftpclient.Connect_Data_Channel();
-
+		
+		ftpclient.get_prev_key();
+		Thread.sleep(100);
 		ftpclient.Reciev_file(f);
-		System.out.println("transmit File : " + f);
-
+		System.out.println("recieve File : " + f);
+		
 		ftpclient.close();
+		return;
 	}
 	//recieve the Signature from the Server and save as a file;
 	public void recieve_Sig(){
