@@ -189,6 +189,7 @@ class Server{
 		FTPServer ftpserv = new FTPServer(PORT+1000,SK,S_IV);
 		Thread.sleep(100);
 		ftpserv.send_prev_key(f);
+		//Thread.sleep(1000);
 		ftpserv.Transmit(f);		
 		System.out.println("trans File");
 		Thread.sleep(1000);
@@ -198,9 +199,10 @@ class Server{
 	public void reciev_File(String f)throws Exception{
 		FTPServer ftpserv = new FTPServer(PORT+1000,SK,S_IV);
 		ftpserv.get_key_iv(f);
+
 		ftpserv.Recieve(f);
 		System.out.println("recive File");
-		Thread.sleep(100);
+	
 		ftpserv.close();
 		return;
 	}

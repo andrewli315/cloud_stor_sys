@@ -76,6 +76,8 @@ class FTPServer{
 		byte[] cipher;
 		int index =0;
 		
+		System.out.println("test");
+		
 		File f_r = new File(file_name);
 		
 		netOut = new DataOutputStream(serv.getOutputStream());
@@ -85,16 +87,17 @@ class FTPServer{
 			plain_txt[index] = (byte)temp;
 			if(index==31){
 				cipher = CipherUtil.authEncrypt(SK, IV, plain_txt);//將檔案明文加密
-				for(int i =0;i<64;i++)
-					System.out.printf("%d ",cipher[i]);
+				/*for(int i =0;i<64;i++)
+					System.out.printf("%d ",cipher[i]);*/
+				System.out.println(cipher.length);
 				netOut.write(cipher);
 				index = 0;
-				Thread.sleep(1000);
+				Thread.sleep(100);
 			}
 			else{
 				index++;
 			}
-			//Thread.sleep(5);
+			Thread.sleep(5);
 		}
 		fin.close();
 		netOut.flush();
@@ -105,19 +108,29 @@ class FTPServer{
 	public void send_prev_key(String file_name){
 		byte[] key = new byte[48];
 		byte[] cipher;
+		int temp;
+		int index =0;
 		File f = new File("key"+File.separator+file_name+".key");
 		
 		try{
 			fin = new DataInputStream(new BufferedInputStream(new FileInputStream(f)));
 			netOut = new DataOutputStream(serv.getOutputStream());
 			
-			fin.read(key);
-			cipher = CipherUtil.authEncrypt(SK,IV,key);
-			System.out.println(cipher.length);
-			netOut.write(cipher);
-			fin.read(key);
-			key = CipherUtil.authEncrypt(SK,IV,key);
-			netOut.write(cipher);
+			while((temp = fin.read())!=-1){
+			//System.out.printf("%d ",(byte)temp);
+			key[index] = (byte)temp;
+			if(index ==47){
+				cipher = CipherUtil.authEncrypt(SK, IV, key);//將密文金鑰用session key加密
+				System.out.println(new String(cipher));
+				//System.out.printf("%d\n",cipher.length);
+				netOut.write(cipher);
+				index =0;
+				netOut.flush();
+			}
+			else{
+				index++;
+			}
+		}
 			netOut.flush();
 			System.out.println("send key..");
 		}catch(Exception e){

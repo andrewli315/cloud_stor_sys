@@ -38,9 +38,7 @@ class FTPClient{
 		S_IV = iv;
 		M_IV = m_iv;
 		MK = mk;
-		F_KEY = generate_key_iv().getBytes();
-		F_IV = generate_key_iv().getBytes();
-		System.out.println(S_KEY.length);
+		
 	}
 	public void Connect_Data_Channel(){
 		try{
@@ -56,6 +54,10 @@ class FTPClient{
 		byte[] s_cipher;
 		byte[] f_cipher;
 		
+		F_KEY = generate_key_iv().getBytes();
+		F_IV = generate_key_iv().getBytes();
+		System.out.println("trans "+new String(F_KEY));
+		System.out.println("trans "+ new String (F_IV));
 		File f_r = new File(file_name);
 		send_f_key();
 		
@@ -68,8 +70,7 @@ class FTPClient{
 			plain_txt[0] = (byte)temp;
 			f_cipher = CipherUtil.authEncrypt(F_KEY, F_IV, plain_txt);//將檔案明文加密
 			s_cipher = CipherUtil.authEncrypt(S_KEY, S_IV, f_cipher);//將檔案明文加密
-			for(int i =0;i<64;i++)
-				System.out.printf("%d ",s_cipher[i]);
+
 			netOut.write(s_cipher);
 			Thread.sleep(100);
 		}
@@ -82,7 +83,7 @@ class FTPClient{
 	}
 	public void Reciev_file(String file_name)throws Exception{
 		
-		//get_prev_key();
+		get_prev_key();
 		int index=0;
 		int temp;
 		byte[] cipher =	new byte[64];
@@ -95,8 +96,11 @@ class FTPClient{
 		while((temp = netIn.read()) != -1){
 			cipher[index] = (byte)temp;
 			if(index == 63){
-				tmp = CipherUtil.authDecrypt(F_KEY, F_IV, cipher);//將client傳來的密文解密(由session key包的那層)
-				dec_data = CipherUtil.authDecrypt(S_KEY, S_IV, tmp);//將client傳來的密文解密(由之前file key加密的)
+				tmp = CipherUtil.authDecrypt(S_KEY, S_IV, cipher);//將client傳來的密文解密(由session key包的那層)
+				for(int i =0;i<32;i++)
+					System.out.printf("%d ",tmp[i]);
+				System.out.printf("\n");
+				dec_data = CipherUtil.authDecrypt(F_KEY, F_IV, tmp);//將client傳來的密文解密(由之前file key加密的)
 				fout.write(dec_data);
 				fout.flush();
 				index =0;
@@ -118,12 +122,15 @@ class FTPClient{
 		temp = CipherUtil.authDecrypt(S_KEY, S_IV, cipher);//將server傳來的密文key解密
 		key = CipherUtil.authDecrypt(MK, M_IV, temp);
 		F_KEY = key;
+		System.out.println(new String (key));
 		netIn.read(cipher);
 		temp = CipherUtil.authDecrypt(S_KEY, S_IV, cipher);//將server傳來的密文IV解密
 		key = CipherUtil.authDecrypt(MK, M_IV, temp);
 		F_IV = key;
-		System.out.println(key);
-		netIn.close();
+		System.out.println(new String(key));
+		System.out.println(new String(F_KEY));
+		System.out.println(new String(F_IV));
+		//netIn.close();
 	}
 	public void send_f_key()throws Exception{
 		netOut = new DataOutputStream(client.getOutputStream());
@@ -131,12 +138,14 @@ class FTPClient{
 		m_cipher = CipherUtil.authEncrypt(MK, M_IV, F_KEY);//用Master key加密file key
 		s_cipher = CipherUtil.authEncrypt(S_KEY, S_IV, m_cipher);
 		netOut.write(s_cipher);
+		System.out.println("send "+F_KEY);
 		System.out.println(m_cipher.length);
 		System.out.println(s_cipher.length);
 		Thread.sleep(1000);
 		m_cipher = CipherUtil.authEncrypt(MK, M_IV, F_IV);//用Master key加密IV
 		s_cipher = CipherUtil.authEncrypt(S_KEY, S_IV, m_cipher);
 		netOut.write(s_cipher);
+		System.out.println("send "+new String (F_IV));
 		netOut.flush();
 		//netOut.close();
 	}
@@ -149,7 +158,7 @@ class FTPClient{
 			str.append(c);			
 		}
 		String output = str.toString();
-		System.out.println(output);
+		//System.out.println(output);
 		return output;
 		
 		

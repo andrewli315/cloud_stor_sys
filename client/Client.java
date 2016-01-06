@@ -217,8 +217,7 @@ class Client{
 		FTPClient ftpclient = new FTPClient(IP,PORT+1000,k,iv,MK,M_IV);
 		ftpclient.Connect_Data_Channel();
 		
-		ftpclient.get_prev_key();
-		Thread.sleep(100);
+		//Thread.sleep(1000);
 		ftpclient.Reciev_file(f);
 		System.out.println("recieve File : " + f);
 		
