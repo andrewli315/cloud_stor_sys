@@ -44,15 +44,12 @@ class Client{
 	
 	
 	//constructor of Client class, in order to create needy variable and GUI　surface
-	public Client()throws Exception{
+	public Client(String account,String psw,String pin,String ip,int port)throws Exception{
 		boolean f=true;
-		
-		input = new BufferedReader(new InputStreamReader(System.in));
-		System.out.println("input the ip and port: ");
-		IP = input.readLine();
-		System.out.println("input the port: ");
-		PORT = Integer.parseInt(input.readLine()); 
-		PIN = input.readLine();//4 digits pin number
+	
+		IP = ip;
+		PORT = port; 
+		PIN = pin;//4 digits pin number
 		PIN = PIN+"000000000000";
 		byte[] temp = CipherUtil.authEncrypt(PIN.getBytes(), "0101010101010101".getBytes(), PIN.getBytes());
 		//把加密過的Pin碼(32bytes)分乘兩部分一部分用作Master Key 另一部分當加密File name 根 file key的 IV
@@ -61,8 +58,9 @@ class Client{
 		
 		connect();
 		netIn = new DataInputStream(new BufferedInputStream(client.getInputStream()));//listen to the message from server;
-		while(f){
-			
+		
+		/*while(f){
+			recieve_file_list();
 			String msg = input.readLine();
 			trans_MSG(msg);
 			Command(msg);
@@ -71,7 +69,7 @@ class Client{
 				f= false;
 			}
 		}
-		close();
+		close();*/
 		return;
 		
 	}
@@ -201,9 +199,6 @@ class Client{
 		System.out.println("transmit File : " + f);
 
 		ftpclient.close();
-		
-		return;
-		
 	}
 	//the purpose is also to create a new data channel to transmit the file
 	public void recieve_File(String f)throws Exception{
@@ -222,8 +217,29 @@ class Client{
 		System.out.println("recieve File : " + f);
 		
 		ftpclient.close();
+	}
+	public void recieve_file_list()throws Exception{
+		System.out.println("recieve File");
+		
+		String[] list;
+		//--------------加解密前先把key和iv拿出---------------------------------------//
+		byte[] sk = client.getSessionKey().getKeyValue();
+		byte[] k = CipherUtil.copy(sk, 0, CipherUtil.KEY_LENGTH);
+		byte[] iv = CipherUtil.copy(sk, CipherUtil.KEY_LENGTH, CipherUtil.BLOCK_LENGTH);
+		//--------------加解密前先把key和iv拿出---------------------------------------// 
+		
+		FTPClient ftpclient = new FTPClient(IP,PORT+1000,k,iv,MK,M_IV);
+		ftpclient.Connect_Data_Channel();
+		
+		list = ftpclient.file_list();
+		System.out.println(list.length+" files");
+		for(int i=0;i<list.length;i++)
+			System.out.println(list[i]);
+		ftpclient.close();
+		
 		return;
 	}
+	
 	//recieve the Signature from the Server and save as a file;
 	public void recieve_Sig(){
 		

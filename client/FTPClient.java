@@ -48,6 +48,31 @@ class FTPClient{
 		}
 		
 	}
+	public String[] file_list()throws Exception{
+		int temp;
+		byte[] cipher = new byte[32];
+		byte[] fname;
+		int index =0;
+		int list = 0;
+		netIn = new DataInputStream(client.getInputStream());
+		temp = netIn.read();
+		String[] f_list = new String[temp];
+		
+		
+		while((temp = netIn.read())!= -1){
+			cipher[index] = (byte)temp;
+			if(index == 31){
+
+				fname =CipherUtil.authDecrypt(S_KEY, S_IV, cipher);
+				f_list[list++] = new String(fname);
+				index =0;
+			}
+			else
+				index++;
+		}
+		return f_list;		
+		
+	}
 	public void Trans_file(String file_name)throws Exception{
 		int temp;
 		byte[] plain_txt = new byte[1];
@@ -111,7 +136,6 @@ class FTPClient{
 		fout.flush();
 		fout.close();
 		close();
-		System.exit(0);
 		
 	}
 	public void get_prev_key()throws Exception{

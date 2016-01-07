@@ -63,6 +63,7 @@ class Server{
 		}
 			try{
 				netIn = new DataInputStream(server.getInputStream());
+				send_file_list();
 				length = netIn.readInt();
 				System.out.println("length = "+length);
 				byte[] temp = new byte[length];
@@ -199,25 +200,39 @@ class Server{
 	public void reciev_File(String f)throws Exception{
 		FTPServer ftpserv = new FTPServer(PORT+1000,SK,S_IV);
 		ftpserv.get_key_iv(f);
-
+	
 		ftpserv.Recieve(f);
 		System.out.println("recive File");
 	
 		ftpserv.close();
 		return;
 	}
+	public void send_file_list()throws Exception{
+		
+		FTPServer ftpserv = new FTPServer(PORT+1000,SK,S_IV);
+		Thread.sleep(1000);
+		ftpserv.send_file_list();
+		System.out.println("recive File");
+	
+		ftpserv.close();
+		
+	}
 	public boolean CD(String f){
 		System.out.println("CD dir");
+		
 		return true;
 	}
 	public boolean Delete(String f){
 		System.out.println("Delete file");
+		
 		return true;
 	}
 	public boolean isFile_Exist(String File){
+		
 		return true;
 	}
 	public boolean isDirectory(String dir){
+		
 		return true;
 	}
 	

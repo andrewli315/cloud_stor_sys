@@ -43,6 +43,25 @@ class FTPServer{
 		serv = server.accept();
 		System.out.println("Server is ready...");
 	}
+	public void send_file_list()throws Exception{
+		
+		byte[] cipher;
+		
+		File search = new File("account");
+		File[] file_read = search.listFiles();
+		String[] f = search.list();	
+		
+		netOut = new DataOutputStream(serv.getOutputStream());
+		netOut.write(f.length);
+		
+		for(int i=0;i<f.length;i++){
+			System.out.println(f[i]);
+			cipher = CipherUtil.authEncrypt(SK,IV,f[i].getBytes());
+			netOut.write(cipher);
+		}
+		netOut.close();
+		
+	}
 	public void Recieve(String file_name)throws Exception{
 		int index=0;
 		int temp;
@@ -82,6 +101,7 @@ class FTPServer{
 		
 		netOut = new DataOutputStream(serv.getOutputStream());
 		fin = new DataInputStream(new BufferedInputStream(new FileInputStream(f_r)));
+
 		
 		while((temp = fin.read())!=-1){
 			plain_txt[index] = (byte)temp;
