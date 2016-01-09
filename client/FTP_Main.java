@@ -16,19 +16,27 @@ import javax.swing.JTextField;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 
-import javax.swing.plaf.metal.*;
-public class FTP_Main extends JFrame{
-	public static void main(String[] args){
-		
-		JFrame ftp_frame = new JFrame("Cloud Storage System");
-		
+public class FTP_Main extends JFrame implements ActionListener{
+	
 		//get local file_name
-		File search = new File("client");
+		static File search = new File("client");
 		File[] file_read = search.listFiles();
-		String[] f = search.list();	
+		static String[] f = search.list();	
 		
-		String[] str = {"test1","test2","test3","test4","test5"};
+		static String[] str = {"test1","test2","test3","test4","test5"};
 		
+		//the parameter input in GUI panel
+		static String s_account ;
+		static String s_password;
+		static String s_pin;
+		static String s_ip;
+		static String s_port;
+		
+		static int port_int;
+		
+		static String cmd;
+
+		static JFrame ftp_frame = new JFrame("Cloud Storage System");
 		
 		//set up Label to show the textfield
 		JLabel ac = new JLabel("Account");
@@ -42,17 +50,16 @@ public class FTP_Main extends JFrame{
 		//set up password textfield
 		JPasswordField text_ps = new JPasswordField();
 		
-		
-		
-		
-		//call the server.java the funtion to get file name in server
-		String [] f_in_server;
-		
 		//ftp panel
 		JLabel lb_ip = new JLabel("IP");
 		JLabel lb_port = new JLabel("PORT");
 		JLabel lb_c_fname = new JLabel("file in client");
 		JLabel lb_s_fname = new JLabel("file in server");
+		
+		static JList<String> client_selector = new JList<String>(f);
+		//static JList<String> server_selector = new JList<String>(str);
+		JScrollPane client_scroll = new JScrollPane(client_selector);
+		
 		
 		JTextField txt_ip = new JTextField();
 		JTextField txt_port = new JTextField();
@@ -61,12 +68,16 @@ public class FTP_Main extends JFrame{
 		JButton btn_upload = new JButton("Upload");
 		JButton btn_download = new JButton("Download");
 		
-		//set scroll panel
-		JList client_selector = new JList<String>(str);
-		JList server_selector = new JList<String>(str);
-		JScrollPane client_scroll = new JScrollPane(client_selector);
-		JScrollPane server_scroll = new JScrollPane(server_selector);
-			
+		
+	public FTP_Main(){		
+		System.out.println(s_account);
+		System.out.println(s_password);
+		System.out.println(s_pin);
+		System.out.println(s_ip);
+		System.out.println(s_port);
+		
+
+		
 			
 		ftp_frame.addWindowListener(new WindowAdapter(){
 			public void windowClosing(WindowEvent arg0){
@@ -80,8 +91,8 @@ public class FTP_Main extends JFrame{
 		
 		
 		text_ac.setBounds(65,5,60,20);
-		text_ps.setBounds(210,5,80,20);
-		text_pin.setBounds(340,5,30,20);
+		text_ps.setBounds(210,5,60,20);
+		text_pin.setBounds(340,5,40,20);
 			
 		
 		lb_ip.setBounds(390,5,20,20);
@@ -93,7 +104,7 @@ public class FTP_Main extends JFrame{
 		txt_port.setBounds(540,5,50,20);
 			
 		client_scroll.setBounds(5,60,300,380);
-		server_scroll.setBounds(350,60,300,380);
+		
 		
 		btn_connect.setBounds(600,5,80,20);
 		btn_upload.setBounds(205,450,100,40);
@@ -105,9 +116,13 @@ public class FTP_Main extends JFrame{
 		ftp_frame.setSize(800,600);
 		ftp_frame.setBackground(Color.WHITE);
 		ftp_frame.setLocation(500,300);
-				
+		
+		btn_connect.addActionListener(this);
+		btn_upload.addActionListener(this);
+		btn_download.addActionListener(this);
+		
 		ftp_frame.add(client_scroll);
-		ftp_frame.add(server_scroll);
+		
 		ftp_frame.add(lb_ip);
 		ftp_frame.add(lb_port);
 		ftp_frame.add(lb_c_fname);
@@ -125,7 +140,81 @@ public class FTP_Main extends JFrame{
 		ftp_frame.add(text_pin);
 		
 		ftp_frame.setVisible(true);
-		
+	}
+	@Override
+	 public void actionPerformed(ActionEvent ae){
+        String action = ae.getActionCommand();
+		byte [] b = cmd.getBytes();
+		//if(cmd.equals("")){
+			if(action.equals("connect")){
+				s_account = text_ac.getText();
+				s_password = new String(text_ps.getPassword());
+				s_pin = text_pin.getText();
+				s_ip = txt_ip.getText();
+				s_port = txt_port.getText();
+				port_int = Integer.parseInt(s_port);
+				System.out.println(s_account);
+				System.out.println(s_password);
+				System.out.println(s_pin);
+				System.out.println(s_ip);
+				System.out.println(port_int);
+				cmd = new String("connect");
+				
+				System.out.println(cmd);
+			}
+			else if(action.equals("Upload")){
+				cmd ="upload";
+				System.out.println(cmd);
+			}
+			else if(action.equals("Download")){
+				cmd = "download";
+				System.out.println(cmd);
+			}
+		//}
+		return;
+	 }
+	 public static void event(String cmd){
+		String[] file_in_server=new String[100];
+		JList<String> server_selector;
+		byte [] b = cmd.getBytes();
+		if(cmd.equals("connect")){
+			try{
+				System.out.println("cccc");
+				Client c = new Client(s_account,s_password,s_pin,s_ip,port_int);
+				c.connect();
+				file_in_server = c.recieve_file_list();
+				server_selector = new JList<String>(file_in_server);
+				JScrollPane server_scroll = new JScrollPane(server_selector);
+				
+				server_scroll.setBounds(350,60,300,380);
+				
+				ftp_frame.add(server_scroll);
+			}catch(Exception e){
+				System.out.println("error");
+			}
+		}
+		else if(cmd.equals("upload")){
+			String x = f[client_selector.getSelectedIndex()];
+			System.out.println("upload file: "+x);
+		}
+		else if(cmd.equals("download")){
+			
+			//String x = file_in_server[server_selector.getSelectedIndex()];
+			//System.out.println(x);
+		}
+	 }
+	 
+	public static void main(String[] args)throws Exception{
+		JFrame demo = new FTP_Main();
+		cmd = "";
+		String temp = "";
+		while(true){
+			if(temp.equals(cmd)){
+				event(cmd);
+				temp = "";
+			}
+			
+		}
 		
 	}
 	

@@ -1,3 +1,4 @@
+package GUI;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.PrintStream;
@@ -48,7 +49,7 @@ class Client{
 		boolean f=true;
 	
 		IP = ip;
-		PORT = port; 
+		PORT = port;
 		PIN = pin;//4 digits pin number
 		PIN = PIN+"000000000000";
 		byte[] temp = CipherUtil.authEncrypt(PIN.getBytes(), "0101010101010101".getBytes(), PIN.getBytes());
@@ -56,7 +57,7 @@ class Client{
 		MK = CipherUtil.copy(temp, 0, CipherUtil.KEY_LENGTH);
 		M_IV = CipherUtil.copy(temp, CipherUtil.KEY_LENGTH, CipherUtil.BLOCK_LENGTH);
 		
-		connect();
+		//connect();
 		netIn = new DataInputStream(new BufferedInputStream(client.getInputStream()));//listen to the message from server;
 		
 		/*while(f){
@@ -70,7 +71,6 @@ class Client{
 			}
 		}
 		close();*/
-		return;
 		
 	}
 	//connect to the server
@@ -98,6 +98,7 @@ class Client{
 			client.doRapidAuthentication();
 			System.out.println("[client] auth: " + client.isAuthenticated());
 			//--------------雙方做認證---------------------------------------------------//	
+			return;
 		
 	}
 	//transmit the message, include the CMD, File name,and something else;
@@ -218,8 +219,7 @@ class Client{
 		
 		ftpclient.close();
 	}
-	public void recieve_file_list()throws Exception{
-		System.out.println("recieve File");
+	public String[] recieve_file_list()throws Exception{
 		
 		String[] list;
 		//--------------加解密前先把key和iv拿出---------------------------------------//
@@ -237,7 +237,7 @@ class Client{
 			System.out.println(list[i]);
 		ftpclient.close();
 		
-		return;
+		return list;
 	}
 	
 	//recieve the Signature from the Server and save as a file;
